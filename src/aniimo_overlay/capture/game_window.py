@@ -49,7 +49,11 @@ def enable_dpi_awareness() -> None:
 
 
 def find_game_window(title_part: str) -> GameWindow | None:
-    """First visible, non-minimized top-level window whose title contains `title_part`."""
+    """Visible, non-minimized top-level window whose title matches `title_part`.
+
+    Preference: exact title, then title starting with it, then containing it. Our own
+    windows and browser tabs of aniimotools.dev are ignored.
+    """
     if sys.platform != "win32" or not title_part:
         return None
     import ctypes
@@ -70,7 +74,8 @@ def find_game_window(title_part: str) -> GameWindow | None:
         buffer = ctypes.create_unicode_buffer(length + 1)
         user32.GetWindowTextW(hwnd, buffer, length + 1)
         title = buffer.value
-        if needle not in title.casefold() or title.startswith("Aniimo Overlay"):
+        folded = title.casefold()
+        if needle not in folded or title.startswith("Aniimo Overlay") or "aniimotools" in folded:
             return True
         rect = wintypes.RECT()
         if not user32.GetClientRect(hwnd, ctypes.byref(rect)):
@@ -80,11 +85,17 @@ def find_game_window(title_part: str) -> GameWindow | None:
         width, height = rect.right - rect.left, rect.bottom - rect.top
         if width > 0 and height > 0:
             found.append(GameWindow(int(hwnd), title, Region(origin.x, origin.y, width, height)))
-            return False
         return True
 
     user32.EnumWindows(enum_proc_type(callback), 0)
-    return found[0] if found else None
+    if not found:
+        return None
+
+    def rank(window: GameWindow) -> int:
+        folded = window.title.casefold().strip()
+        return 0 if folded == needle else 1 if folded.startswith(needle) else 2
+
+    return min(found, key=rank)  # stable: keeps Z-order among equals
 
 
 def is_exclusive_fullscreen() -> bool:

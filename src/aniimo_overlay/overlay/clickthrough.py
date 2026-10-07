@@ -40,9 +40,10 @@ def set_click_through(widget: QWidget, enabled: bool) -> None:
 
 def _set_click_through_win32(widget: QWidget, enabled: bool) -> None:
     import ctypes
+    from ctypes import wintypes
 
     user32 = ctypes.windll.user32
-    hwnd = int(widget.winId())
+    hwnd = wintypes.HWND(int(widget.winId()))
     style = user32.GetWindowLongW(hwnd, GWL_EXSTYLE)
     passive_bits = WS_EX_TRANSPARENT | WS_EX_NOACTIVATE
     if enabled:
@@ -66,7 +67,7 @@ def exclude_from_capture(widget: QWidget) -> bool:
     try:
         ok = bool(
             ctypes.windll.user32.SetWindowDisplayAffinity(
-                int(widget.winId()), WDA_EXCLUDEFROMCAPTURE
+                ctypes.c_void_p(int(widget.winId())), WDA_EXCLUDEFROMCAPTURE
             )
         )
     except (AttributeError, OSError):

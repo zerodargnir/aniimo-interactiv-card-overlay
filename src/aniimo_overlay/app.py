@@ -95,6 +95,7 @@ class App(QObject):
         self.tray.detect.connect(self.detect_now)
         self.tray.show_control.connect(self.show_control)
         self.tray.quit_requested.connect(self.quit)
+        self.state_changed.connect(self._update_tray)
 
         # Timers
         self._auto_timer = QTimer(self)
@@ -395,7 +396,11 @@ class App(QObject):
 
     def _record(self, outcome: DetectionOutcome) -> None:
         self.last_outcome = outcome
-        self.tray.update_state(self.overlay_visible, self.overlay.interactive, outcome.describe())
+        self._update_tray()
+
+    def _update_tray(self) -> None:
+        last = self.last_outcome.describe() if self.last_outcome else ""
+        self.tray.update_state(self.overlay_visible, self.overlay.interactive, last)
 
     def _send(self, sector: str, numpad: int) -> None:
         self._last_sent_sector = sector
