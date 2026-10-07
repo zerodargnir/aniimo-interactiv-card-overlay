@@ -518,16 +518,21 @@ def _setup_logging(debug: bool) -> None:
 
 
 def _check_session() -> None:
-    if sys.platform.startswith("linux") and os.environ.get("XDG_SESSION_TYPE") == "wayland":
-        log.warning(
-            "Session Wayland détectée : capture d'écran, raccourcis globaux et « toujours au "
-            "premier plan » peuvent ne pas fonctionner. Utilise une session X11 si possible ; "
-            "l'application tourne via XWayland (QT_QPA_PLATFORM=xcb)."
-        )
-        os.environ.setdefault("QT_QPA_PLATFORM", "xcb")
+    if not sys.platform.startswith("linux") or os.environ.get("XDG_SESSION_TYPE") != "wayland":
+        return
+    message = (
+        "Session Wayland détectée : capture d'écran, raccourcis globaux et « toujours au "
+        "premier plan » peuvent ne pas fonctionner. Utilise une session X11 si possible."
+    )
+    if "QT_QPA_PLATFORM" not in os.environ:
+        os.environ["QT_QPA_PLATFORM"] = "xcb"
+        message += " L'application tourne via XWayland (QT_QPA_PLATFORM=xcb)."
+    log.warning(message)
 
 
 def _close_splash() -> None:
+    if "_PYI_SPLASH_IPC" not in os.environ:  # not started from the exe with a splash
+        return
     try:
         import pyi_splash  # type: ignore[import-not-found]
 
