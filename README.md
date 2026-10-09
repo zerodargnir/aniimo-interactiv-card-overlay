@@ -97,3 +97,4 @@ ne fonctionnent pas sous Wayland. L'application bascule automatiquement sur XWay
   *Build Windows exe* (onglet Actions) ou pousser un tag `v*`
   (`git tag v0.1.0 && git push origin v0.1.0`) : l'exe est publié en artifact, et en
   release pour un tag.
+# aniimo-interactiv-card-overlay
